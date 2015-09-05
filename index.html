@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+  <head>
+    <title>FSE Chat Room</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      .logo {padding: 15px 0; font-size: 25px; color: #aaaaaa; font-weight: bold; text-align: center;}
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 1; padding: 10px; width: 100%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 10; padding: 0; }
+      #messages li { padding: 5px 10px; text-align: center; border:3px solid #8AC007;}
+      #messages li:nth-child(odd) { background: #eee; }
+    </style>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <form action="" id="login">
+     <div class="logo">login</div>
+      <input id="fName" autocomplete="off" placeholder="First Name"/>
+      <input id="lName" autocomplete="off" placeholder="Last Name"/>
+      <input id="sub" type="button" onClick="login()" value="Enter"/>
+    </form>
+    <div id="chat" hidden>
+      <form action="">
+        <input id="m" autocomplete="off" /><button>Send</button>
+      </form>
+    <div>
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      var socket = io();
+      var fName = null, lName = null;
+      function login() {
+        fName = $('#fName').val();
+        lName = $('#lName').val();
+        if (fName == '' && lName == '')
+          return;
+        socket.emit('login', fName, lName);
+        // $('#fName').val('');
+        // $('#lName').val('');
+        $('#login').hide();
+        $('#chat').show();
+      }
+      $('form').submit(function() {
+        socket.emit('chat message', fName, lName, $('#m').val(), Date());
+        $('#m').val('');
+        return false;
+      });
+      function helper1(f, l, msg, time) {
+        if (f == fName && l == lName) {
+            $('#messages').append($('<li>').text('me' + ' says \"' + msg + '\" at ' + time));
+        } else if (fName == null && lName == null) {
+        } else {    
+            $('#messages').append($('<li>').text(f + ' ' + l + ' says \"' + '\n' + msg + '\" at ' + time));
+        }
+      };
+      socket.on('chat history', helper1);
+      socket.on('chat message', helper1);
+    </script>
+  </body>
+</html>
