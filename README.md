@@ -5,6 +5,6 @@
 'npm install --save socket.io'
 'npm install --save sqlite3'
 
-3. To launch the node.js server, from the terminal command line execute "node index.js".
+3. To launch the node.js server, from the terminal command line execute "node webserver.js".
 
 4. To open a new session with the node.js server, from any browser open the URL "http://localhost:51717/". 

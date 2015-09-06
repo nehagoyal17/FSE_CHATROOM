@@ -2,62 +2,150 @@
 <html>
   <head>
     <title>FSE Chat Room</title>
+    <!-- This is the CSS format for varous HTML tags in the file -->
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       .logo {padding: 15px 0; font-size: 25px; color: #aaaaaa; font-weight: bold; text-align: center;}
       body { font: 13px Helvetica, Arial; }
+
+      /* Format for the login form to send the user credentials to the webserver */
       form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
       form input { border: 1; padding: 10px; width: 100%; margin-right: .5%; }
       form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+
+      /* Format for the chat messages received from the webserver */
       #messages { list-style-type: none; margin: 10; padding: 0; }
       #messages li { padding: 5px 10px; text-align: center; border:3px solid #8AC007;}
       #messages li:nth-child(odd) { background: #eee; }
     </style>
   </head>
   <body>
+    <!-- Placeholder for all the message received from the webserver -->
     <ul id="messages"></ul>
+    <!-- The login form to send the user's first name and last name 
+         to the webserver. This is the form that is send to the server
+         once a user connects to the webserver. This is visible to the user
+         when the user connects to the webserver. -->
     <form action="" id="login">
      <div class="logo">login</div>
       <input id="fName" autocomplete="off" placeholder="First Name"/>
       <input id="lName" autocomplete="off" placeholder="Last Name"/>
       <input id="sub" type="button" onClick="login()" value="Enter"/>
     </form>
+    
+    <!-- The chat form which is made visible to user after the user logins 
+         with the webserver. This form is hidden from the user when the 
+         user connects to the webserver. -->
     <div id="chat" hidden>
       <form action="">
         <input id="m" autocomplete="off" /><button>Send</button>
       </form>
     <div>
+    
+    <!-- The javascipt source for socker.io and jquery libraries -->
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+
+    <!-- The javascript which is used to communicate with the webserver.-->
     <script>
+      /* 
+       * The socker var for 'io' operations with the webserver.
+       */
       var socket = io();
+
+      /* 
+       * The first and the last name for the user are initialized to
+       * null at the start.
+       */
       var fName = null, lName = null;
+    
+      /**
+       * The login() function which gets called once the user clicks on
+       * "Enter" in the login form.
+       */
       function login() {
+
+        /*
+         * Get the first name and last name from the login form data.
+         */
         fName = $('#fName').val();
         lName = $('#lName').val();
+
+        /*
+         * If the user has not entered first name and last name then
+         * do not send the login information to the server.
+         */
         if (fName == '' && lName == '')
           return;
+
+        /*
+         * Send the fName and lName to the server and "login" event. 
+         */
         socket.emit('login', fName, lName);
-        // $('#fName').val('');
-        // $('#lName').val('');
+
+        /*
+         * Once the login information is sent to the server, then hide
+         * login HTML element of the form and unhide the chat HTML element
+         * of the HTML file.
+         */
         $('#login').hide();
         $('#chat').show();
       }
+
+      /**
+       * This function gets called when the user enters a chat message. 
+       * The chat message along with the first name, last name, the message 
+       * and the current date is sent across to the chat webserver using 
+       * socket.emit().
+       */
       $('form').submit(function() {
         socket.emit('chat message', fName, lName, $('#m').val(), Date());
         $('#m').val('');
         return false;
       });
-      function helper1(f, l, msg, time) {
+    
+      /**
+       * This is the handler function which processes the chat message(s)
+       * received from the webserver. The chat received from the webserver
+       * is displayed in the browser after some processing.
+       */
+      function process_chat_received(f, l, msg, time) {
+
         if (f == fName && l == lName) {
+
+           /*
+            * If the chat received from the server was sent by the user himself,
+            * then print "me" in the messages list along with the message and the 
+            * timestamp of the message.
+            */
             $('#messages').append($('<li>').text('me' + ' says \"' + msg + '\" at ' + time));
         } else if (fName == null && lName == null) {
+
+            /*
+             * If the chat received from the server but the user did not login with
+             * his first name and last name was, then do not display any chat in the
+             * user's browser window.
+             */
         } else {    
+
+           /*
+            * If the chat received from the server which was not sent by the user himself,
+            * then print the firstname, last name in the messages list along with the message and the 
+            * timestamp of the message.
+            */
             $('#messages').append($('<li>').text(f + ' ' + l + ' says \"' + '\n' + msg + '\" at ' + time));
         }
       };
-      socket.on('chat history', helper1);
-      socket.on('chat message', helper1);
+
+      /*
+       * Listen on the socket for "chat history" event.
+       */
+      socket.on('chat history', process_chat_received);
+
+      /*
+       * Listen on the socket for "chat message" event.
+       */
+      socket.on('chat message', process_chat_received);
     </script>
   </body>
 </html>
